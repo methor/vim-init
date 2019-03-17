@@ -169,4 +169,7 @@ set wildignore+=*.gba,*.sfc,*.078,*.nds,*.smd,*.smc
 set wildignore+=*.linux2,*.win32,*.darwin,*.freebsd,*.linux,*.android
 
 
-
+"---------------------------------------------------------------------
+" leader
+" --------------------------------------------------------------------
+let mapleader=" "

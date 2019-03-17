@@ -190,6 +190,12 @@ if index(g:bundle_group, 'tags') >= 0
 	" 支持光标移动到符号名上：<leader>cg 查看定义，<leader>cs 查看引用
 	Plug 'skywind3000/gutentags_plus'
 
+	let $GTAGSLABEL = 'native-pygments'
+	" let $GTAGSLABEL='native'
+	let $GTAGSCONF = '/usr/local/share/gtags/gtags.conf'
+
+	" let g:gutentags_define_advanced_commands = 1
+
 	" 设定项目目录标志：除了 .git/.svn 外，还有 .root 文件
 	let g:gutentags_project_root = ['.root']
 	let g:gutentags_ctags_tagfile = '.tags'
@@ -221,6 +227,9 @@ if index(g:bundle_group, 'tags') >= 0
 
 	" 禁止 gutentags 自动链接 gtags 数据库
 	let g:gutentags_auto_add_gtags_cscope = 0
+
+	" change focus to quickfix window after search (optional).
+	let g:gutentags_plus_switch = 1
 endif
 
 
@@ -516,6 +525,8 @@ if index(g:bundle_group, 'leaderf') >= 0
 		noremap <m-n> :CtrlPBuffer<cr>
 	endif
 endif
+
+Plug 'Valloric/YouCompleteMe'
 
 
 "----------------------------------------------------------------------
