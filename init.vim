@@ -27,6 +27,9 @@ exec 'set rtp+='.s:home
 set rtp+=~/.vim
 
 
+
+let g:blade_root = $HOME . '/cpp'
+
 "----------------------------------------------------------------------
 " 模块加载
 "----------------------------------------------------------------------
@@ -49,5 +52,13 @@ LoadScript init/init-style.vim
 " 自定义按键
 LoadScript init/init-keymaps.vim
 
+" 缩写定义
+LoadScript init/init-abbv.vim
 
+
+
+" let g:ycm_server_keep_logfiles = 1
+" let g:ycm_server_log_level = 'debug'
+" let g:gutentags_define_advanced_commands = 1
+let $GTAGSLABEL='native'
 

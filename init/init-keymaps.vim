@@ -17,6 +17,12 @@
 
 
 "----------------------------------------------------------------------
+" ssh远端vim复制到本地剪切板
+"----------------------------------------------------------------------
+nnoremap <leader>y :call system('socat - tcp:localhost:8377', @0)<CR>
+
+
+"----------------------------------------------------------------------
 " INSERT 模式下使用 EMACS 键位
 "----------------------------------------------------------------------
 inoremap <c-a> <home>
@@ -30,14 +36,14 @@ inoremap <c-_> <c-k>
 " 使用 SecureCRT/XShell 等终端软件需设置：Backspace sends delete
 " 详见：http://www.skywind.me/blog/archives/2021
 "----------------------------------------------------------------------
-noremap <C-h> <left>
-noremap <C-j> <down>
-noremap <C-k> <up>
-noremap <C-l> <right>
-inoremap <C-h> <left>
-inoremap <C-j> <down>
-inoremap <C-k> <up>
-inoremap <C-l> <right>
+" noremap <C-h> <left>
+" noremap <C-j> <down>
+" noremap <C-k> <up>
+" noremap <C-l> <right>
+" inoremap <C-h> <left>
+" inoremap <C-j> <down>
+" inoremap <C-k> <up>
+" inoremap <C-l> <right>
 
 
 "----------------------------------------------------------------------
@@ -220,6 +226,21 @@ elseif has('nvim')
 	tnoremap <m-q> <c-\><c-n>
 endif
 
+" Zoom / Restore window.
+function! s:ZoomToggle() abort
+    if exists('t:zoomed') && t:zoomed
+        execute t:zoom_winrestcmd
+        let t:zoomed = 0
+    else
+        let t:zoom_winrestcmd = winrestcmd()
+        resize
+        vertical resize
+        let t:zoomed = 1
+    endif
+endfunction
+command! ZoomToggle call s:ZoomToggle()
+nnoremap <silent> <C-W>r :ZoomToggle<CR>
+
 
 
 "----------------------------------------------------------------------
@@ -232,6 +253,16 @@ let g:asyncrun_open = 6
 
 " 任务结束时候响铃提醒
 let g:asyncrun_bell = 1
+
+" function! SyntaxGoto()
+" 	try
+" 		PreviewTag
+" 	catch
+" 		YcmCompleter Goto
+" 	endtry
+" endfunc
+
+nnoremap <c-_> :YcmCompleter GoTo<cr>
 
 " 设置 F10 打开/关闭 Quickfix 窗口
 nnoremap <F10> :call asyncrun#quickfix_toggle(6)<cr>
@@ -252,7 +283,9 @@ nnoremap <silent> <F8> :AsyncRun -cwd=<root> -raw make run <cr>
 nnoremap <silent> <F6> :AsyncRun -cwd=<root> -raw make test <cr>
 
 " 更新 cmake
-nnoremap <silent> <F4> :AsyncRun -cwd=<root> cmake . <cr>
+" nnoremap <silent> <F4> :AsyncRun -cwd=<root> cmake . <cr>
+noremap <F4> :PreviewSignature!<cr>
+inoremap <F4> <c-\><c-o>:PreviewSignature!<cr>
 
 " Windows 下支持直接打开新 cmd 窗口运行
 if has('win32') || has('win64')

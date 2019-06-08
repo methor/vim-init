@@ -1,11 +1,11 @@
-"======================================================================
+" ======================================================================
 "
-" init-plugins.vim - 
+" init-plugins.vim -
 "
 " Created by skywind on 2018/05/31
 " Last Modified: 2018/06/10 23:11
 "
-"======================================================================
+" ======================================================================
 " vim: set ts=4 sw=4 tw=78 noet :
 
 
@@ -17,7 +17,10 @@ if !exists('g:bundle_group')
 	let g:bundle_group = ['basic', 'tags', 'enhanced', 'filetypes', 'textobj']
 	let g:bundle_group += ['tags', 'airline', 'nerdtree', 'ale', 'echodoc']
 	let g:bundle_group += ['leaderf']
+	let g:bundle_group += ['clang-rename']
+	let g:bundle_group += ['utils']
 endif
+
 
 
 "----------------------------------------------------------------------
@@ -30,6 +33,31 @@ function! s:path(path)
 	return substitute(path, '\\', '/', 'g')
 endfunc
 
+"----------------------------------------------------------------------
+" 获取blade目录下的编译选项
+" ---------------------------------------------------------------------
+function! s:isBladeCpp(blade_root)
+	let current_dir = resolve(fnamemodify("tmp.txt", ":p:h"))
+	if current_dir =~ a:blade_root . '.*'
+		return 1
+	else
+		return 0
+	endif
+endfunc
+
+function! s:getBladeCompileFlags(blade_root)
+python << EOF
+import vim
+import imp
+import os
+blade_root = vim.eval('a:blade_root')
+blade_conf = imp.load_source('module_name', os.path.join(blade_root, 'blade_clang_conf.py'))
+b_clang_options = blade_conf.expandGlob(blade_conf.flags)
+vim.command("let blade_clang_options = %s" % b_clang_options)
+EOF
+	return blade_clang_options
+endfunc
+
 
 "----------------------------------------------------------------------
 " 在 ~/.vim/bundles 下安装插件
@@ -37,12 +65,49 @@ endfunc
 call plug#begin(get(g:, 'bundle_home', '~/.vim/bundles'))
 
 
+
+
 "----------------------------------------------------------------------
-" 默认插件 
+" 默认插件
 "----------------------------------------------------------------------
 
 " 全文快速移动，<leader><leader>f{char} 即可触发
 Plug 'easymotion/vim-easymotion'
+" Gif config
+map <Leader><Leader>l <Plug>(easymotion-lineforward)
+map <Leader><Leader>j <Plug>(easymotion-j)
+map <Leader><Leader>k <Plug>(easymotion-k)
+map <Leader><Leader>h <Plug>(easymotion-linebackward)
+" Gif config
+map / <Plug>(easymotion-sn)
+omap / <Plug>(easymotion-tn)
+" These `n` & `N` mappings are options. You do not have to map `n` & `N` to EasyMotion.
+" Without these mappings, `n` & `N` works fine. (These mappings just provide
+" different highlight method and have some other features )
+" map  n <Plug>(easymotion-next)
+" map  N <Plug>(easymotion-prev)
+" <Leader>f{char} to move to {char}
+map  <Leader><Leader>f <Plug>(easymotion-bd-f)
+nmap <Leader><Leader>f <Plug>(easymotion-overwin-f)
+
+" s{char}{char} to move to {char}{char}
+nmap <Leader><Leader>s <Plug>(easymotion-overwin-f2)
+
+" Move to line
+map <Leader><Leader>L <Plug>(easymotion-bd-jk)
+nmap <Leader><Leader>L <Plug>(easymotion-overwin-line)
+
+" Move to word
+map  <Leader><Leader>w <Plug>(easymotion-bd-w)
+nmap <Leader><Leader>w <Plug>(easymotion-overwin-w)
+
+" These `n` & `N` mappings are options. You do not have to map `n` & `N` to EasyMotion.
+" Without these mappings, `n` & `N` works fine. (These mappings just provide
+" different highlight method and have some other features )
+" map n <Plug>(easymotion-next)
+" map N <Plug>(easymotion-prev)
+
+let g:EasyMotion_startofline = 0 " keep cursor column when JK motion
 
 " 文件浏览器，代替 netrw
 Plug 'justinmk/vim-dirvish'
@@ -143,6 +208,33 @@ if index(g:bundle_group, 'basic') >= 0
 			\}
 endif
 
+"----------------------------------------------------------------------
+" c++重构插件
+" ---------------------------------------------------------------------
+if index(g:bundle_group, 'clang-rename') >= 0
+	Plug 'uplus/vim-clang-rename'
+
+	function! s:bladeClangRenameFlags(blade_root)
+		if s:isBladeCpp(a:blade_root)
+			let l:flags = []
+			call extend(l:flags, s:getBladeCompileFlags(a:blade_root))
+			let b:clang_rename_compile_flags = l:flags
+		endif
+	endfunc
+
+	augroup bladeClangRenameFlags
+		autocmd!
+		autocmd BufNewFile,BufReadPre,BufEnter <buffer> :call s:bladeClangRenameFlags(g:blade_root)
+	augroup END
+endif
+
+"----------------------------------------------------------------------
+" 增强的utils
+" ---------------------------------------------------------------------
+if index(g:bundle_group, 'utils') >= 0
+	Plug 'sk1418/Join'
+endif
+
 
 "----------------------------------------------------------------------
 " 增强插件
@@ -169,7 +261,7 @@ if index(g:bundle_group, 'enhanced') >= 0
 
 	" 提供 gist 接口
 	Plug 'lambdalisue/vim-gista', { 'on': 'Gista' }
-	
+
 	" ALT_+/- 用于按分隔符扩大缩小 v 选区
 	map <m-=> <Plug>(expand_region_expand)
 	map <m--> <Plug>(expand_region_shrink)
@@ -192,19 +284,22 @@ if index(g:bundle_group, 'tags') >= 0
 
 	let $GTAGSLABEL = 'native-pygments'
 	" let $GTAGSLABEL='native'
-	let $GTAGSCONF = '/usr/local/share/gtags/gtags.conf'
+	let $GTAGSCONF = '/data09/home/huangmaosen.y18/.globalrc'
+	let $TMPDIR = '/data09/home/huangmaosen.y18/tmp'
 
-	" let g:gutentags_define_advanced_commands = 1
+	let g:gutentags_define_advanced_commands = 1
 
 	" 设定项目目录标志：除了 .git/.svn 外，还有 .root 文件
-	let g:gutentags_project_root = ['.root']
+	" let g:gutentags_project_root = ['.root']
+	let g:gutentags_project_root = ['BLADE_ROOT']
+	let g:gutentags_add_default_project_roots = 0
 	let g:gutentags_ctags_tagfile = '.tags'
 
 	" 默认生成的数据文件集中到 ~/.cache/tags 避免污染项目目录，好清理
 	let g:gutentags_cache_dir = expand('~/.cache/tags')
 
 	" 默认禁用自动生成
-	let g:gutentags_modules = [] 
+	let g:gutentags_modules = []
 
 	" 如果有 ctags 可执行就允许动态生成 ctags 文件
 	if executable('ctags')
@@ -217,8 +312,19 @@ if index(g:bundle_group, 'tags') >= 0
 	endif
 
 	" 设置 ctags 的参数
+	" https://linux.die.net/man/1/ctags
 	let g:gutentags_ctags_extra_args = []
+	" fields:
+	" n: 行号
+	" i: 继承信息
+	" a: 类成员的access信息
+	" z: 'kind:' 键
+	" s: 函数原型
+	" extra:
+	" r: 为声明创建tag entry，这里不创建
+	" f: 为源文件创建tag entry，实现头文件与实现文件的跳转，这里依赖ycm更好
 	let g:gutentags_ctags_extra_args = ['--fields=+niazS', '--extra=+q']
+	" h: header files，这里不生成
 	let g:gutentags_ctags_extra_args += ['--c++-kinds=+px']
 	let g:gutentags_ctags_extra_args += ['--c-kinds=+px']
 
@@ -237,7 +343,7 @@ endif
 " 文本对象：textobj 全家桶
 "----------------------------------------------------------------------
 if index(g:bundle_group, 'textobj')
-	
+
 	" 基础插件：提供让用户方便的自定义文本对象的接口
 	Plug 'kana/vim-textobj-user'
 
@@ -284,7 +390,7 @@ if index(g:bundle_group, 'filetypes') >= 0
 	" rust 语法增强
 	Plug 'rust-lang/rust.vim', { 'for': 'rust' }
 
-	" vim org-mode 
+	" vim org-mode
 	Plug 'jceb/vim-orgmode', { 'for': 'org' }
 endif
 
@@ -360,6 +466,9 @@ if index(g:bundle_group, 'ale') >= 0
 	" 禁用默认 INSERT 模式下改变文字也触发的设置，太频繁外，还会让补全窗闪烁
 	let g:ale_lint_on_text_changed = 'normal'
 	let g:ale_lint_on_insert_leave = 1
+	let g:ale_lint_on_save = 0
+	" 进入时检测
+	let g:ale_lint_on_enter = 1
 
 	" 在 linux/mac 下降低语法检查程序的进程优先级（不要卡到前台进程）
 	if has('win32') == 0 && has('win64') == 0 && has('win32unix') == 0
@@ -371,18 +480,18 @@ if index(g:bundle_group, 'ale') >= 0
 
 	" 编辑不同文件类型需要的语法检查器
 	let g:ale_linters = {
-				\ 'c': ['gcc', 'cppcheck'], 
-				\ 'cpp': ['gcc', 'cppcheck'], 
-				\ 'python': ['flake8', 'pylint'], 
-				\ 'lua': ['luac'], 
+				\ 'c': ['gcc', 'cppcheck'],
+				\ 'cpp': ['clang', 'clangcheck'],
+				\ 'python': ['flake8', 'pylint'],
+				\ 'lua': ['luac'],
 				\ 'go': ['go build', 'gofmt'],
 				\ 'java': ['javac'],
-				\ 'javascript': ['eslint'], 
+				\ 'javascript': ['eslint'],
 				\ }
 
 
 	" 获取 pylint, flake8 的配置文件，在 vim-init/tools/conf 下面
-	function s:lintcfg(name)
+	function! s:lintcfg(name)
 		let conf = s:path('tools/conf/')
 		let path1 = conf . a:name
 		let path2 = expand('~/.vim/linter/'. a:name)
@@ -397,9 +506,24 @@ if index(g:bundle_group, 'ale') >= 0
 	let g:ale_python_pylint_options = '--rcfile='.s:lintcfg('pylint.conf')
 	let g:ale_python_pylint_options .= ' --disable=W'
 	let g:ale_c_gcc_options = '-Wall -O2 -std=c99'
-	let g:ale_cpp_gcc_options = '-Wall -O2 -std=c++14'
+	let g:ale_cpp_clang_options = '-Wall -O2 -std=c++14'
 	let g:ale_c_cppcheck_options = ''
-	let g:ale_cpp_cppcheck_options = ''
+	let g:ale_cpp_clangcheck_options = ''
+
+
+	function! s:lintForBlade(blade_root)
+		if s:isBladeCpp(a:blade_root)
+			let b:ale_cpp_clang_options = join(s:getBladeCompileFlags(a:blade_root), ' ')
+		endif
+	endfunction
+
+	augroup lintBlade
+		autocmd!
+		autocmd BufNewFile,BufReadPre,BufEnter <buffer> call s:lintForBlade(g:blade_root)
+	augroup END
+
+
+
 
 	let g:ale_linters.text = ['textlint', 'write-good', 'languagetool']
 
@@ -552,6 +676,9 @@ let g:ycm_complete_in_strings=1
 let g:ycm_key_invoke_completion = '<c-z>'
 set completeopt=menu,menuone
 
+let g:ycm_global_ycm_extra_conf = '~/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp/ycm/.ycm_extra_conf.py'
+let g:ycm_extra_conf_globlist = ['~/cpp/*']
+
 " noremap <c-z> <NOP>
 
 " 两个字符自动触发语义补全
@@ -564,16 +691,16 @@ let g:ycm_semantic_triggers =  {
 "----------------------------------------------------------------------
 " Ycm 白名单（非名单内文件不启用 YCM），避免打开个 1MB 的 txt 分析半天
 "----------------------------------------------------------------------
-let g:ycm_filetype_whitelist = { 
+let g:ycm_filetype_whitelist = {
 			\ "c":1,
-			\ "cpp":1, 
+			\ "cpp":1,
 			\ "objc":1,
 			\ "objcpp":1,
 			\ "python":1,
 			\ "java":1,
 			\ "javascript":1,
 			\ "coffee":1,
-			\ "vim":1, 
+			\ "vim":1,
 			\ "go":1,
 			\ "cs":1,
 			\ "lua":1,
@@ -618,5 +745,3 @@ let g:ycm_filetype_whitelist = {
 			\ "zimbu":1,
 			\ "ps1":1,
 			\ }
-
-
