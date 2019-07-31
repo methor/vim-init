@@ -607,12 +607,12 @@ if index(g:bundle_group, 'leaderf') >= 0
 
 		" 使用 ESC 键可以直接退出 leaderf 的 normal 模式
 		let g:Lf_NormalMap = {
-				\ "File":   [["<ESC>", ':exec g:Lf_py "fileExplManager.quit()"<CR>']],
-				\ "Buffer": [["<ESC>", ':exec g:Lf_py "bufExplManager.quit()"<cr>']],
-				\ "Mru": [["<ESC>", ':exec g:Lf_py "mruExplManager.quit()"<cr>']],
-				\ "Tag": [["<ESC>", ':exec g:Lf_py "tagExplManager.quit()"<cr>']],
-				\ "BufTag": [["<ESC>", ':exec g:Lf_py "bufTagExplManager.quit()"<cr>']],
-				\ "Function": [["<ESC>", ':exec g:Lf_py "functionExplManager.quit()"<cr>']],
+				\ "File":   [["<ESC>", ':exec g:Lf_py "fileExplManager.quit()"<CR>'], ["<C-c>", ':exec g:Lf_py "fileExplManager.quit()"<CR>']],
+				\ "Buffer": [["<ESC>", ':exec g:Lf_py "bufExplManager.quit()"<cr>'], ["<C-c>", ':exec g:Lf_py "bufExplManager.quit()"<CR>']],
+				\ "Mru": [["<ESC>", ':exec g:Lf_py "mruExplManager.quit()"<cr>'], ["<C-c>", ':exec g:Lf_py "mruExplManager.quit()"<CR>']],
+				\ "Tag": [["<ESC>", ':exec g:Lf_py "tagExplManager.quit()"<cr>'], ["<C-c>", ':exec g:Lf_py "tagExplManager.quit()"<CR>']],
+				\ "BufTag": [["<ESC>", ':exec g:Lf_py "bufTagExplManager.quit()"<cr>'], ["<C-c>", ':exec g:Lf_py "bufTagExplManager.quit()"<CR>']],
+				\ "Function": [["<ESC>", ':exec g:Lf_py "functionExplManager.quit()"<cr>'], ["<C-c>", ':exec g:Lf_py "functionExplManager.quit()"<CR>'], ["<m-p>", ':exec g:Lf_py "functionExplManager.quit()"<CR>']],
 				\ }
 
 	else
