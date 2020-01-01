@@ -8,11 +8,11 @@
 "======================================================================
 
 " 防止重复加载
-if get(s:, 'loaded', 0) != 0
-	finish
-else
-	let s:loaded = 1
-endif
+" if get(s:, 'loaded', 0) != 0
+" 	finish
+" else
+" 	let s:loaded = 1
+" endif
 
 " 取得本文件所在的目录
 let s:home = fnamemodify(resolve(expand('<sfile>:p')), ':h')
@@ -60,5 +60,5 @@ LoadScript init/init-abbv.vim
 " let g:ycm_server_keep_logfiles = 1
 " let g:ycm_server_log_level = 'debug'
 " let g:gutentags_define_advanced_commands = 1
-let $GTAGSLABEL='native'
+" let $GTAGSLABEL='native'
 

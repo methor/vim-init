@@ -14,7 +14,7 @@
 " 默认情况下的分组，可以再前面覆盖之
 "----------------------------------------------------------------------
 if !exists('g:bundle_group')
-	let g:bundle_group = ['basic', 'tags', 'enhanced', 'filetypes', 'textobj']
+	let g:bundle_group = ['basic', 'enhanced', 'filetypes', 'textobj']
 	let g:bundle_group += ['tags', 'airline', 'nerdtree', 'ale', 'echodoc']
 	let g:bundle_group += ['leaderf']
 	let g:bundle_group += ['clang-rename']
@@ -188,7 +188,7 @@ if index(g:bundle_group, 'basic') >= 0
 	nmap <m-e> <Plug>(choosewin)
 
 	" 默认不显示 startify
-	let g:startify_disable_at_vimenter = 1
+	let g:startify_disable_at_vimenter = 0
 	let g:startify_session_dir = '~/.vim/session'
 
 	" 使用 <space>ha 清除 errormarker 标注的错误
@@ -284,15 +284,17 @@ if index(g:bundle_group, 'tags') >= 0
 
 	let $GTAGSLABEL = 'native-pygments'
 	" let $GTAGSLABEL='native'
-	let $GTAGSCONF = '/data09/home/huangmaosen.y18/.globalrc'
-	let $TMPDIR = '/data09/home/huangmaosen.y18/tmp'
+	let $GTAGSCONF = expand('~') . '/.globalrc'
+	let $TMPDIR = $HOME . '/tmp'
+	silent !mkdir $TMPDIR > /dev/null 2>&1
 
 	let g:gutentags_define_advanced_commands = 1
 
 	" 设定项目目录标志：除了 .git/.svn 外，还有 .root 文件
 	" let g:gutentags_project_root = ['.root']
-	let g:gutentags_project_root = ['BLADE_ROOT']
-	let g:gutentags_add_default_project_roots = 0
+	" let g:gutentags_project_root = ['BLADE_ROOT']
+	let g:gutentags_add_default_project_roots = 1
+	" let g:gutentags_project_root = ['.root']
 	let g:gutentags_ctags_tagfile = '.tags'
 
 	" 默认生成的数据文件集中到 ~/.cache/tags 避免污染项目目录，好清理
@@ -551,28 +553,46 @@ endif
 if index(g:bundle_group, 'leaderf') >= 0
 	" 如果 vim 支持 python 则启用  Leaderf
 	if has('python') || has('python3')
-		Plug 'Yggdroot/LeaderF'
+		Plug 'Yggdroot/LeaderF', { 'do': './install.sh' }
+		if !executable("gtags")
+			echo "No gtags installed. please install gtags first!"
+		endif
+		if !executable("pygmentize")
+			echo "Please install pygments as follows `pip install pygments`"
+		endif
+
+
+		let g:Lf_Ctags = "gtags"
+		let g:Lf_Gtagslabel = 'native-pygments'
+		
+
+		" 自动生成gtags文件，路径`$HOME/.LfCache/gtags/%PATH%OF%YOUR%PROJECT/`
+		let g:Lf_GtagsAutoGenerate = 1
 
 		" CTRL+p 打开文件模糊匹配
 		let g:Lf_ShortcutF = '<c-p>'
 
-		" ALT+n 打开 buffer 模糊匹配
-		let g:Lf_ShortcutB = '<m-n>'
-
 		" CTRL+n 打开最近使用的文件 MRU，进行模糊匹配
 		noremap <c-n> :LeaderfMru<cr>
 
-		" ALT+p 打开函数列表，按 i 进入模糊匹配，ESC 退出
-		noremap <m-p> :LeaderfFunction!<cr>
+		" 全局 tags 模糊匹配
+		noremap <c-m> :Leaderf gtags --result ctags-mod<cr>
+
+		" 用rg做模糊搜索
+		noremap <m-m> :Leaderf rg<cr>
+
 
 		" ALT+SHIFT+p 打开 tag 列表，i 进入模糊匹配，ESC退出
-		noremap <m-P> :LeaderfBufTag!<cr>
+		" noremap <m-P> :LeaderfBufTag!<cr>
 
-		" ALT+n 打开 buffer 列表进行模糊匹配
-		noremap <m-n> :LeaderfBuffer<cr>
-
-		" 全局 tags 模糊匹配
-		noremap <m-m> :LeaderfTag<cr>
+		noremap <leader>fh :<C-U><C-R>=printf("Leaderf cmdHistory")<CR><CR>
+		noremap <leader>fb :<C-U><C-R>=printf("Leaderf buffer %s", "")<CR><CR>
+		noremap <leader>fl :<C-U><C-R>=printf("Leaderf line %s", "")<CR><CR>
+		noremap <leader>fc :<C-U><C-R>=printf("Leaderf --recall")<CR><CR>
+		noremap <leader>fr :<C-U><C-R>=printf("Leaderf gtags -r %s --auto-jump", expand("<cword>"))<CR><CR>
+		noremap <leader>fd :<C-U><C-R>=printf("Leaderf gtags -d %s --auto-jump", expand("<cword>"))<CR><CR>
+		noremap <leader>fn :<C-U><C-R>=printf("Leaderf gtags --next %s", "")<CR><CR>
+		noremap <leader>fp :<C-U><C-R>=printf("Leaderf gtags --previous %s", "")<CR><CR>
 
 		" 最大历史文件保存 2048 个
 		let g:Lf_MruMaxFiles = 2048
@@ -586,11 +606,17 @@ if index(g:bundle_group, 'leaderf') >= 0
 		let g:Lf_WindowHeight = 0.30
 		let g:Lf_CacheDirectory = expand('~/.vim/cache')
 
+		let g:Lf_UseCache = 0
+
 		" 显示绝对路径
 		let g:Lf_ShowRelativePath = 0
 
+		let g:Lf_WindowPosition = 'popup'
+
+		let g:Lf_PreviewInPopup = 1
+
 		" 隐藏帮助
-		let g:Lf_HideHelp = 1
+		let g:Lf_HideHelp = 0
 
 		" 模糊匹配忽略扩展名
 		let g:Lf_WildIgnore = {
@@ -603,17 +629,18 @@ if index(g:bundle_group, 'leaderf') >= 0
 		let g:Lf_StlColorscheme = 'powerline'
 
 		" 禁用 function/buftag 的预览功能，可以手动用 p 预览
-		let g:Lf_PreviewResult = {'Function':0, 'BufTag':0}
+		let g:Lf_PreviewResult = {'Function':1, 'BufTag':1, 'File': 1, 'Buffer': 1, 'Gtags': 1, 'Rg': 1, 'Mru': 1, 'Tag': 1, 'Colorscheme': 1}
 
 		" 使用 ESC 键可以直接退出 leaderf 的 normal 模式
 		let g:Lf_NormalMap = {
-				\ "File":   [["<ESC>", ':exec g:Lf_py "fileExplManager.quit()"<CR>'], ["<C-c>", ':exec g:Lf_py "fileExplManager.quit()"<CR>']],
-				\ "Buffer": [["<ESC>", ':exec g:Lf_py "bufExplManager.quit()"<cr>'], ["<C-c>", ':exec g:Lf_py "bufExplManager.quit()"<CR>']],
-				\ "Mru": [["<ESC>", ':exec g:Lf_py "mruExplManager.quit()"<cr>'], ["<C-c>", ':exec g:Lf_py "mruExplManager.quit()"<CR>']],
-				\ "Tag": [["<ESC>", ':exec g:Lf_py "tagExplManager.quit()"<cr>'], ["<C-c>", ':exec g:Lf_py "tagExplManager.quit()"<CR>']],
-				\ "BufTag": [["<ESC>", ':exec g:Lf_py "bufTagExplManager.quit()"<cr>'], ["<C-c>", ':exec g:Lf_py "bufTagExplManager.quit()"<CR>']],
-				\ "Function": [["<ESC>", ':exec g:Lf_py "functionExplManager.quit()"<cr>'], ["<C-c>", ':exec g:Lf_py "functionExplManager.quit()"<CR>'], ["<m-p>", ':exec g:Lf_py "functionExplManager.quit()"<CR>']],
+				\ "File":   [["<ESC>", ':exec g:Lf_py "fileExplManager.quit()"<CR>']],
+				\ "Buffer": [["<ESC>", ':exec g:Lf_py "bufExplManager.quit()"<cr>']],
+				\ "Mru": [["<ESC>", ':exec g:Lf_py "mruExplManager.quit()"<cr>']],
+				\ "Tag": [["<ESC>", ':exec g:Lf_py "tagExplManager.quit()"<cr>']],
+				\ "BufTag": [["<ESC>", ':exec g:Lf_py "bufTagExplManager.quit()"<cr>']],
+				\ "Function": [["<ESC>", ':exec g:Lf_py "functionExplManager.quit()"<cr>'], ["<m-p>", ':exec g:Lf_py "functionExplManager.quit()"<CR>']],
 				\ }
+		let g:Lf_CommandMap = {'<ESC>': ['<C-C>']}
 
 	else
 		" 不支持 python ，使用 CtrlP 代替
